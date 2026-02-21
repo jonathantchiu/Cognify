@@ -1,3 +1,4 @@
+*.env
 .env
 backend/.venv
 server/.venv
