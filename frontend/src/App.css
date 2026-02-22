@@ -24,6 +24,22 @@
   --radius-sm: 6px;
 }
 
+[data-theme="dark"] {
+  --bg: #111827;
+  --surface: #1f2937;
+  --text: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --border: #374151;
+  --primary-light: #064e3b;
+  --danger-light: #7f1d1d;
+  --success-bg: #064e3b;
+  --error-bg: #7f1d1d;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+}
+
 #root {
   text-align: left;
 }
@@ -136,6 +152,26 @@ body {
 .topbar-link.active {
   background: var(--primary-light);
   color: var(--primary);
+}
+
+.theme-toggle {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  margin-left: 8px;
+}
+
+.theme-toggle:hover {
+  background: var(--bg);
+  color: var(--text);
 }
 
 .topbar-spacer {

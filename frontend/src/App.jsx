@@ -33,6 +33,13 @@ function App() {
   const [isFlipped, setIsFlipped] = useState(false)
   const [flashcardStudyMode, setFlashcardStudyMode] = useState(false)
 
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
   const isGroupDetail = view === 'group-detail'
   const apiBase = isGroupDetail
     ? `/api/groups/${selectedGroup?.id}`
@@ -202,14 +209,26 @@ function App() {
     ])
   }
 
+  const parseErrorResponse = async (res) => {
+    const text = await res.text()
+    try {
+      const err = JSON.parse(text)
+      const d = err.detail
+      if (typeof d === 'string') return d
+      if (Array.isArray(d) && d[0]?.msg) return d.map((e) => e.msg).join('; ')
+      return text || `Request failed (${res.status})`
+    } catch {
+      return text || `Request failed (${res.status})`
+    }
+  }
+
   const generateFlashcards = async () => {
     setFlashcardsLoading(true)
     setError('')
     try {
       const res = await fetch(`${apiBase}/flashcards`, { method: 'POST' })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || `Request failed (${res.status})`)
+        throw new Error(await parseErrorResponse(res))
       }
       const data = await res.json()
       setFlashcards(data.flashcards)
@@ -230,8 +249,7 @@ function App() {
     try {
       const res = await fetch(`${apiBase}/quiz`, { method: 'POST' })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || `Request failed (${res.status})`)
+        throw new Error(await parseErrorResponse(res))
       }
       const data = await res.json()
       setQuiz(data.quiz)
@@ -248,8 +266,7 @@ function App() {
     try {
       const res = await fetch(`${apiBase}/study-plan`, { method: 'POST' })
       if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || `Request failed (${res.status})`)
+        throw new Error(await parseErrorResponse(res))
       }
       const data = await res.json()
       setPlan(data.plan)
@@ -527,6 +544,13 @@ function App() {
               onClick={() => setView('create')}
             >
               + Create
+            </button>
+            <button
+              className="theme-toggle"
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? '\u2600' : '\u{1F319}'}
             </button>
           </nav>
         </div>

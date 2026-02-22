@@ -5,6 +5,7 @@ from sqlalchemy import inspect, text
 
 from database import Base, engine, get_db
 from models import FlashcardSet, Note, NoteGroup, QuizSet, StudyPlan
+from openai import OpenAIError
 from openai_client import create_flashcards, create_quiz, create_study_plan
 from schemas import (
     FlashcardSetOut,
@@ -91,6 +92,8 @@ def generate_flashcards(note_id: int, db: Session = Depends(get_db)):
         result = create_flashcards(note.content)
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"AI output invalid: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     flashcard_set = FlashcardSet(note_id=note.id, json_data=result.model_dump())
     db.add(flashcard_set)
@@ -163,6 +166,8 @@ def generate_quiz(note_id: int, db: Session = Depends(get_db)):
         result = create_quiz(note.content)
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"AI output invalid: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     quiz_set = QuizSet(note_id=note.id, json_data=result.model_dump())
     db.add(quiz_set)
@@ -204,6 +209,8 @@ def generate_study_plan(note_id: int, db: Session = Depends(get_db)):
         result = create_study_plan(note.content)
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"AI output invalid: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     plan = StudyPlan(note_id=note.id, json_data=result.model_dump())
     db.add(plan)
@@ -287,6 +294,8 @@ def generate_group_flashcards(group_id: int, db: Session = Depends(get_db)):
         result = create_flashcards(_combined_content(group))
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"AI output invalid: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     flashcard_set = FlashcardSet(group_id=group.id, json_data=result.model_dump())
     db.add(flashcard_set)
@@ -319,6 +328,8 @@ def generate_group_quiz(group_id: int, db: Session = Depends(get_db)):
         result = create_quiz(_combined_content(group))
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"AI output invalid: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     quiz_set = QuizSet(group_id=group.id, json_data=result.model_dump())
     db.add(quiz_set)
@@ -351,6 +362,8 @@ def generate_group_study_plan(group_id: int, db: Session = Depends(get_db)):
         result = create_study_plan(_combined_content(group))
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"AI output invalid: {e}")
+    except OpenAIError as e:
+        raise HTTPException(status_code=502, detail=str(e))
 
     plan_row = StudyPlan(group_id=group.id, json_data=result.model_dump())
     db.add(plan_row)

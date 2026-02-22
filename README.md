@@ -85,7 +85,7 @@ docker compose up --build
 
 | Service | URL |
 |---|---|
-| Frontend | [http://localhost:3000](http://localhost:3000) |
+| Frontend | [http://localhost:3001](http://localhost:3001) |
 | Backend API docs | [http://localhost:8001/docs](http://localhost:8001/docs) |
 | Backend health check | [http://localhost:8001/api/health](http://localhost:8001/api/health) |
 
