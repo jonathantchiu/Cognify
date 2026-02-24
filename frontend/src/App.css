@@ -542,6 +542,12 @@ body {
   margin-bottom: 1rem;
 }
 
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .content-block {
   background: var(--surface);
   border-radius: var(--radius);

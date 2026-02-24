@@ -34,11 +34,56 @@ function App() {
   const [flashcardStudyMode, setFlashcardStudyMode] = useState(false)
 
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light')
+  const [editingNote, setEditingNote] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editContent, setEditContent] = useState('')
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const inInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)
+      if (inInput && !['Escape'].includes(e.key)) return
+
+      if (e.key === 'Escape') {
+        if (editingNote) {
+          setEditingNote(false)
+          e.preventDefault()
+        } else if (view === 'detail' || view === 'group-detail') {
+          setView('list')
+          e.preventDefault()
+        }
+        return
+      }
+
+      if (view === 'detail' && selectedNote && e.key.toLowerCase() === 'e' && !inInput) {
+        if (editingNote) setEditingNote(false)
+        else { setEditTitle(selectedNote.title); setEditContent(selectedNote.content); setEditingNote(true) }
+        e.preventDefault()
+        return
+      }
+
+      if (flashcardStudyMode && flashcards?.length > 0) {
+        if (e.key === 'ArrowLeft') {
+          setCurrentCardIndex((i) => Math.max(0, i - 1))
+          setIsFlipped(false)
+          e.preventDefault()
+        } else if (e.key === 'ArrowRight') {
+          setCurrentCardIndex((i) => Math.min(flashcards.length - 1, i + 1))
+          setIsFlipped(false)
+          e.preventDefault()
+        } else if ((e.key === ' ' || e.key === 'Enter') && !inInput) {
+          setIsFlipped((f) => !f)
+          e.preventDefault()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [view, selectedNote, editingNote, flashcardStudyMode, flashcards?.length])
 
   const isGroupDetail = view === 'group-detail'
   const apiBase = isGroupDetail
@@ -106,12 +151,37 @@ function App() {
   const openNote = async (noteId) => {
     setError('')
     resetStudyTools()
+    setEditingNote(false)
     try {
       const res = await fetch(`/api/notes/${noteId}`)
       if (!res.ok) throw new Error(`Request failed (${res.status})`)
-      setSelectedNote(await res.json())
+      const note = await res.json()
+      setSelectedNote(note)
+      setEditTitle(note.title)
+      setEditContent(note.content)
       setView('detail')
       await loadSavedStudyTools(`/api/notes/${noteId}`)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  const updateNote = async (e) => {
+    e.preventDefault()
+    if (!selectedNote) return
+    setError('')
+    try {
+      const res = await fetch(`/api/notes/${selectedNote.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTitle, content: editContent }),
+      })
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      const updated = await res.json()
+      setSelectedNote(updated)
+      setEditingNote(false)
+      await fetchNotes()
+      await fetchGroups()
     } catch (e) {
       setError(e.message)
     }
@@ -769,13 +839,54 @@ function App() {
             <button className="btn btn-secondary" onClick={() => setView('list')}>
               &larr; Back
             </button>
-            <button className="btn btn-danger" onClick={() => deleteNote(selectedNote.id)}>
-              Delete Note
-            </button>
+            <div className="detail-header-actions">
+              {!editingNote ? (
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => { setEditTitle(selectedNote.title); setEditContent(selectedNote.content); setEditingNote(true) }}
+                >
+                  Edit
+                </button>
+              ) : (
+                <button className="btn btn-secondary" onClick={() => setEditingNote(false)}>
+                  Cancel
+                </button>
+              )}
+              <button className="btn btn-danger" onClick={() => deleteNote(selectedNote.id)}>
+                Delete Note
+              </button>
+            </div>
           </div>
-          <h2>{selectedNote.title}</h2>
-          {renderStudyTabs()}
-          <div className="content-block">{selectedNote.content}</div>
+          {editingNote ? (
+            <form onSubmit={updateNote} className="form">
+              <label className="form-label">
+                Title
+                <input
+                  className="form-input"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="form-label">
+                Content
+                <textarea
+                  className="form-textarea"
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={8}
+                  required
+                />
+              </label>
+              <button type="submit" className="btn btn-primary">Save</button>
+            </form>
+          ) : (
+            <>
+              <h2>{selectedNote.title}</h2>
+              {renderStudyTabs()}
+              <div className="content-block">{selectedNote.content}</div>
+            </>
+          )}
         </section>
       )}
 

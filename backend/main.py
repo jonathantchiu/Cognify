@@ -14,6 +14,7 @@ from schemas import (
     GroupOut,
     NoteCreate,
     NoteOut,
+    NoteUpdate,
     QuizOut,
     StudyPlanOut,
 )
@@ -71,6 +72,18 @@ def get_note(note_id: int, db: Session = Depends(get_db)):
     note = db.query(Note).filter(Note.id == note_id).first()
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+
+@app.put("/api/notes/{note_id}", response_model=NoteOut)
+def update_note(note_id: int, payload: NoteUpdate, db: Session = Depends(get_db)):
+    note = db.query(Note).filter(Note.id == note_id).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    note.title = payload.title
+    note.content = payload.content
+    db.commit()
+    db.refresh(note)
     return note
 
 

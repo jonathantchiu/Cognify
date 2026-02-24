@@ -8,6 +8,11 @@ class NoteCreate(BaseModel):
     content: str = Field(..., min_length=1)
 
 
+class NoteUpdate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    content: str = Field(..., min_length=1)
+
+
 class NoteOut(BaseModel):
     id: int
     title: str
